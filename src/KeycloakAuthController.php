@@ -116,6 +116,8 @@ class KeycloakAuthController implements RequestHandlerInterface
         // Fine! We now know everything we need about our remote user
         $remoteUserArray = $remoteUser->toArray();
 
+        // Get all the user roles across resources
+        $remoteUserArray['roles'] = $this->getAllRoles($remoteUserArray['resource_access'], $provider);
         // Map Keycloak roles onto Flarum groups
         if (isset($remoteUserArray['roles']) && is_array($remoteUserArray['roles'])) {
 
@@ -278,5 +280,23 @@ class KeycloakAuthController implements RequestHandlerInterface
       }
 
        return $data;
+    }
+    /**
+     * Extracts all roles from all resources in resource_access and returns them as a flat array
+     *
+     * @param array $resourceAccess The resource_access array from the authentication response
+     * @return array A flat array containing all roles from all resources
+     */
+    protected function getAllRoles(array $resourceAccess, $provider): array
+    {
+        $allRoles = [];
+
+        foreach ($resourceAccess as $resource) {
+            if (isset($resource['roles']) && is_array($resource['roles'])) {
+                $allRoles = array_merge($allRoles, $resource['roles']);
+            }
+        }
+
+        return array_unique($allRoles);
     }
 }
