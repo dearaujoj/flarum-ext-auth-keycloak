@@ -231,7 +231,7 @@ class KeycloakAuthController implements RequestHandlerInterface
 
       // Same regex used in Registration.suggestUsername
       $rawUsername = Arr::get($remoteUserArray, 'preferred_username');
-      $username = preg_replace('/[^a-z0-9-_]/i', '', $rawUsername);
+      $username = preg_replace('/[^a-z0-9-_.]/i', '', $rawUsername);
       if ($username == $rawUsername) {
         $registration->suggestUsername($rawUsername);
       } else {
