@@ -7,6 +7,8 @@ use Flarum\Group\Group;
 use Flarum\Forum\Auth\Registration;
 use Flarum\Forum\Auth\ResponseFactory;
 use Flarum\Settings\SettingsRepositoryInterface;
+use Flarum\User\Exception\NotAuthenticatedException;
+use Flarum\User\Exception\PermissionDeniedException;
 use Flarum\User\LoginProvider;
 use Flarum\User\User;
 use Flarum\User\RegistrationToken;
@@ -117,7 +119,8 @@ class KeycloakAuthController implements RequestHandlerInterface
         $remoteUserArray = $remoteUser->toArray();
 
         // Get all the user roles across resources
-        $remoteUserArray['roles'] = $this->getAllRoles($remoteUserArray['resource_access'], $provider);
+        $remoteUserArray['roles'] = $this->getAllRoles($remoteUserArray['resource_access']);
+
         // Map Keycloak roles onto Flarum groups
         if (isset($remoteUserArray['roles']) && is_array($remoteUserArray['roles'])) {
 
@@ -132,6 +135,11 @@ class KeycloakAuthController implements RequestHandlerInterface
                     }
                 }
             }
+        }
+
+        // At this point if user doesn't have group then it should be authorized to go further
+        if(empty($groups)) {
+            throw new PermissionDeniedException();
         }
 
         // Map Keycloak attributes with custom mapping, if any
@@ -287,7 +295,7 @@ class KeycloakAuthController implements RequestHandlerInterface
      * @param array $resourceAccess The resource_access array from the authentication response
      * @return array A flat array containing all roles from all resources
      */
-    protected function getAllRoles(array $resourceAccess, $provider): array
+    protected function getAllRoles(array $resourceAccess): array
     {
         $allRoles = [];
 
